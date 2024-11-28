@@ -25,27 +25,27 @@ def get_hfi_returns():
     hfi.index = hfi.index.to_period('M')
     return hfi
 
-def get_ind_file(filetype):
-    """
-    Load and format the Ken French 30 Industry Portfolios files
-    """
-    known_types = ["returns", "nfirms", "size"]
-    if filetype not in known_types:
-        sep = ','
-        raise ValueError(f'filetype must be one of:{sep.join(known_types)}')
-    if filetype is "returns":
-        name = "vw_rets"
-        divisor = 100
-    elif filetype is "nfirms":
-        name = "nfirms"
-        divisor = 1
-    elif filetype is "size":
-        name = "size"
-        divisor = 1
-    ind = pd.read_csv(f"../data/ind30_m_{name}.csv", header=0, index_col=0)/divisor
-    ind.index = pd.to_datetime(ind.index, format="%Y%m").to_period('M')
-    ind.columns = ind.columns.str.strip()
-    return ind
+# def get_ind_file(filetype):
+#     """
+#     Load and format the Ken French 30 Industry Portfolios files
+#     """
+#     known_types = ["returns", "nfirms", "size"]
+#     if filetype not in known_types:
+#         sep = ','
+#         raise ValueError(f'filetype must be one of:{sep.join(known_types)}')
+#     if filetype is "returns":
+#         name = "vw_rets"
+#         divisor = 100
+#     elif filetype is "nfirms":
+#         name = "nfirms"
+#         divisor = 1
+#     elif filetype is "size":
+#         name = "size"
+#         divisor = 1
+#     ind = pd.read_csv(f"../data/ind30_m_{name}.csv", header=0, index_col=0)/divisor
+#     ind.index = pd.to_datetime(ind.index, format="%Y%m").to_period('M')
+#     ind.columns = ind.columns.str.strip()
+#     return ind
 
 def get_ind_returns():
     """
@@ -529,46 +529,46 @@ def ann_to_inst(r):
     """
     return np.log1p(r)
 
-def cir(n_years = 10, n_scenarios=1, a=0.05, b=0.03, sigma=0.05, steps_per_year=12, r_0=None):
-    """
-    Generate random interest rate evolution over time using the CIR model
-    b and r_0 are assumed to be the annualized rates, not the short rate
-    and the returned values are the annualized rates as well
-    """
-    if r_0 is None: r_0 = b 
-    r_0 = ann_to_inst(r_0)
-    dt = 1/steps_per_year
-    num_steps = int(n_years*steps_per_year) + 1 # because n_years might be a float
+# def cir(n_years = 10, n_scenarios=1, a=0.05, b=0.03, sigma=0.05, steps_per_year=12, r_0=None):
+#     """
+#     Generate random interest rate evolution over time using the CIR model
+#     b and r_0 are assumed to be the annualized rates, not the short rate
+#     and the returned values are the annualized rates as well
+#     """
+#     if r_0 is None: r_0 = b 
+#     r_0 = ann_to_inst(r_0)
+#     dt = 1/steps_per_year
+#     num_steps = int(n_years*steps_per_year) + 1 # because n_years might be a float
     
-    shock = np.random.normal(0, scale=np.sqrt(dt), size=(num_steps, n_scenarios))
-    rates = np.empty_like(shock)
-    rates[0] = r_0
+#     shock = np.random.normal(0, scale=np.sqrt(dt), size=(num_steps, n_scenarios))
+#     rates = np.empty_like(shock)
+#     rates[0] = r_0
 
-    ## For Price Generation
-    h = math.sqrt(a**2 + 2*sigma**2)
-    prices = np.empty_like(shock)
-    ####
+#     ## For Price Generation
+#     h = math.sqrt(a**2 + 2*sigma**2)
+#     prices = np.empty_like(shock)
+#     ####
 
-    def price(ttm, r):
-        _A = ((2*h*math.exp((h+a)*ttm/2))/(2*h+(h+a)*(math.exp(h*ttm)-1)))**(2*a*b/sigma**2)
-        _B = (2*(math.exp(h*ttm)-1))/(2*h + (h+a)*(math.exp(h*ttm)-1))
-        _P = _A*np.exp(-_B*r)
-        return _P
-    prices[0] = price(n_years, r_0)
-    ####
+#     def price(ttm, r):
+#         _A = ((2*h*math.exp((h+a)*ttm/2))/(2*h+(h+a)*(math.exp(h*ttm)-1)))**(2*a*b/sigma**2)
+#         _B = (2*(math.exp(h*ttm)-1))/(2*h + (h+a)*(math.exp(h*ttm)-1))
+#         _P = _A*np.exp(-_B*r)
+#         return _P
+#     prices[0] = price(n_years, r_0)
+#     ####
     
-    for step in range(1, num_steps):
-        r_t = rates[step-1]
-        d_r_t = a*(b-r_t)*dt + sigma*np.sqrt(r_t)*shock[step]
-        rates[step] = abs(r_t + d_r_t)
-        # generate prices at time t as well ...
-        prices[step] = price(n_years-step*dt, rates[step])
+#     for step in range(1, num_steps):
+#         r_t = rates[step-1]
+#         d_r_t = a*(b-r_t)*dt + sigma*np.sqrt(r_t)*shock[step]
+#         rates[step] = abs(r_t + d_r_t)
+#         # generate prices at time t as well ...
+#         prices[step] = price(n_years-step*dt, rates[step])
 
-    rates = pd.DataFrame(data=inst_to_ann(rates), index=range(num_steps))
-    ### for prices
-    prices = pd.DataFrame(data=prices, index=range(num_steps))
-    ###
-    return rates, prices
+#     rates = pd.DataFrame(data=inst_to_ann(rates), index=range(num_steps))
+#     ### for prices
+#     prices = pd.DataFrame(data=prices, index=range(num_steps))
+#     ###
+#     return rates, prices
 
 def bond_cash_flows(maturity, principal=100, coupon_rate=0.03, coupons_per_year=12):
     """
@@ -637,76 +637,78 @@ def bond_total_return(monthly_prices, principal, coupon_rate, coupons_per_year):
     return total_returns.dropna()
 
 
-def bt_mix(r1, r2, allocator, **kwargs):
-    """
-    Runs a back test (simulation) of allocating between a two sets of returns
-    r1 and r2 are T x N DataFrames or returns where T is the time step index and N is the number of scenarios.
-    allocator is a function that takes two sets of returns and allocator specific parameters, and produces
-    an allocation to the first portfolio (the rest of the money is invested in the GHP) as a T x 1 DataFrame
-    Returns a T x N DataFrame of the resulting N portfolio scenarios
-    """
-    if not r1.shape == r2.shape:
-        raise ValueError("r1 and r2 should have the same shape")
-    weights = allocator(r1, r2, **kwargs)
-    if not weights.shape == r1.shape:
-        raise ValueError("Allocator returned weights with a different shape than the returns")
-    r_mix = weights*r1 + (1-weights)*r2
-    return r_mix
+# def bt_mix(r1, r2, allocator, **kwargs):
+#     """
+#     Runs a back test (simulation) of allocating between a two sets of returns
+#     r1 and r2 are T x N DataFrames or returns where T is the time step index and N is the number of scenarios.
+#     allocator is a function that takes two sets of returns and allocator specific parameters, and produces
+#     an allocation to the first portfolio (the rest of the money is invested in the GHP) as a T x 1 DataFrame
+#     Returns a T x N DataFrame of the resulting N portfolio scenarios
+#     """
+#     if not r1.shape == r2.shape:
+#         raise ValueError("r1 and r2 should have the same shape")
+#     weights = allocator(r1, r2, **kwargs)
+#     if not weights.shape == r1.shape:
+#         raise ValueError("Allocator returned weights with a different shape than the returns")
+#     r_mix = weights*r1 + (1-weights)*r2
+#     return r_mix
 
 
-def fixedmix_allocator(r1, r2, w1, **kwargs):
-    """
-    Produces a time series over T steps of allocations between the PSP and GHP across N scenarios
-    PSP and GHP are T x N DataFrames that represent the returns of the PSP and GHP such that:
-     each column is a scenario
-     each row is the price for a timestep
-    Returns an T x N DataFrame of PSP Weights
-    """
-    return pd.DataFrame(data = w1, index=r1.index, columns=r1.columns)
+# def fixedmix_allocator(r1, r2, w1, **kwargs):
+#     """
+#     Produces a time series over T steps of allocations between the PSP and GHP across N scenarios
+#     PSP and GHP are T x N DataFrames that represent the returns of the PSP and GHP such that:
+#      each column is a scenario
+#      each row is the price for a timestep
+#     Returns an T x N DataFrame of PSP Weights
+#     """
+#     return pd.DataFrame(data = w1, index=r1.index, columns=r1.columns)
 
-def terminal_values(rets):
-    """
-    Computes the terminal values from a set of returns supplied as a T x N DataFrame
-    Return a Series of length N indexed by the columns of rets
-    """
-    return (rets+1).prod()
+# def terminal_values(rets):
+#     """
+#     Computes the terminal values from a set of returns supplied as a T x N DataFrame
+#     Return a Series of length N indexed by the columns of rets
+#     """
+#     return (rets+1).prod()
 
-def terminal_stats(rets, floor = 0.8, cap=np.inf, name="Stats"):
-    """
-    Produce Summary Statistics on the terminal values per invested dollar
-    across a range of N scenarios
-    rets is a T x N DataFrame of returns, where T is the time-step (we assume rets is sorted by time)
-    Returns a 1 column DataFrame of Summary Stats indexed by the stat name 
-    """
-    terminal_wealth = (rets+1).prod()
-    breach = terminal_wealth < floor
-    reach = terminal_wealth >= cap
-    p_breach = breach.mean() if breach.sum() > 0 else np.nan
-    p_reach = reach.mean() if reach.sum() > 0 else np.nan
-    e_short = (floor-terminal_wealth[breach]).mean() if breach.sum() > 0 else np.nan
-    e_surplus = (-cap+terminal_wealth[reach]).mean() if reach.sum() > 0 else np.nan
-    sum_stats = pd.DataFrame.from_dict({
-        "mean": terminal_wealth.mean(),
-        "std" : terminal_wealth.std(),
-        "p_breach": p_breach,
-        "e_short":e_short,
-        "p_reach": p_reach,
-        "e_surplus": e_surplus
-    }, orient="index", columns=[name])
-    return sum_stats
+# def terminal_stats(rets, floor = 0.8, cap=np.inf, name="Stats"):
+#     """
+#     Produce Summary Statistics on the terminal values per invested dollar
+#     across a range of N scenarios
+#     rets is a T x N DataFrame of returns, where T is the time-step (we assume rets is sorted by time)
+#     Returns a 1 column DataFrame of Summary Stats indexed by the stat name 
+#     """
+#     terminal_wealth = (rets+1).prod()
+#     breach = terminal_wealth < floor
+#     reach = terminal_wealth >= cap
+#     p_breach = breach.mean() if breach.sum() > 0 else np.nan
+#     p_reach = reach.mean() if reach.sum() > 0 else np.nan
+#     e_short = (floor-terminal_wealth[breach]).mean() if breach.sum() > 0 else np.nan
+#     e_surplus = (-cap+terminal_wealth[reach]).mean() if reach.sum() > 0 else np.nan
+#     sum_stats = pd.DataFrame.from_dict({
+#         "mean": terminal_wealth.mean(),
+#         "std" : terminal_wealth.std(),
+#         "p_breach": p_breach,
+#         "e_short":e_short,
+#         "p_reach": p_reach,
+#         "e_surplus": e_surplus
+#     }, orient="index", columns=[name])
+#     return sum_stats
 
-def glidepath_allocator(r1, r2, start_glide=1, end_glide=0.0):
-    """
-    Allocates weights to r1 starting at start_glide and ends at end_glide
-    by gradually moving from start_glide to end_glide over time
-    """
-    n_points = r1.shape[0]
-    n_col = r1.shape[1]
-    path = pd.Series(data=np.linspace(start_glide, end_glide, num=n_points))
-    paths = pd.concat([path]*n_col, axis=1)
-    paths.index = r1.index
-    paths.columns = r1.columns
-    return paths
+# def glidepath_allocator(r1, r2, start_glide=1, end_glide=0.0):
+#     """
+#     Allocates weights to r1 starting at start_glide and ends at end_glide
+#     by gradually moving from start_glide to end_glide over time
+#     """
+#     n_points = r1.shape[0]
+#     n_col = r1.shape[1]
+#     path = pd.Series(data=np.linspace(start_glide, end_glide, num=n_points))
+#     paths = pd.concat([path]*n_col, axis=1)
+#     paths.index = r1.index
+#     paths.columns = r1.columns
+#     return paths
+
+# CPPI with LHP and PSP
 
 def floor_allocator(psp_r, ghp_r, floor, zc_prices, m=3):
     """
